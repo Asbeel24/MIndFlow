@@ -1,0 +1,5 @@
+{
+  "name": "MindFlow",
+  "description": "一个极简的、非线性的思维工具，专为 ADHD 和冥想设计。在一个 7x7 的有机网格中捕捉想法，并带有颜色渐变。",
+  "requestFramePermissions": []
+}
