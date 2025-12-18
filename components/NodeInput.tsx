@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Check, Sparkles, Loader2 } from 'lucide-react';
 import { BASE_COLORS } from '../utils/colorUtils';
 import { getSuggestedThoughts } from '../services/geminiService';
@@ -8,6 +8,8 @@ interface NodeInputProps {
   onSave: (content: string, color: string) => void;
   onCancel: () => void;
   initialColor: string;
+  initialContent?: string;
+  isEditing?: boolean;
   parentNode?: MindNode;
   allNodes: MindNode[];
 }
@@ -16,10 +18,12 @@ export const NodeInput: React.FC<NodeInputProps> = ({
   onSave, 
   onCancel, 
   initialColor, 
+  initialContent = '',
+  isEditing = false,
   parentNode,
   allNodes
 }) => {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent);
   const [selectedColor, setSelectedColor] = useState(initialColor);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
@@ -32,17 +36,21 @@ export const NodeInput: React.FC<NodeInputProps> = ({
   };
 
   const handleAiSuggest = async () => {
-    if (!parentNode) return;
+    const contextNode = isEditing ? parentNode : parentNode; // Simplification
+    const targetContent = isEditing ? content : (parentNode?.content || '');
+    
     setIsLoadingAi(true);
-    const results = await getSuggestedThoughts(parentNode.content, allNodes);
+    const results = await getSuggestedThoughts(targetContent, allNodes);
     setSuggestions(results);
     setIsLoadingAi(false);
   };
 
   return (
-    <div className="absolute z-50 p-4 bg-white rounded-2xl shadow-xl border border-gray-100 w-72 animate-in fade-in zoom-in duration-200">
+    <div className="absolute z-50 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 animate-in fade-in zoom-in duration-200">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">新想法</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          {isEditing ? '修改想法' : '新想法'}
+        </h3>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
           <X size={16} />
         </button>
@@ -63,25 +71,8 @@ export const NodeInput: React.FC<NodeInputProps> = ({
           }}
         />
 
-        {/* Color Palette (Only show if this is the root node, otherwise inherit/fade is automatic usually, but giving choice is nice) */}
-        {!parentNode && (
-           <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
-           {BASE_COLORS.map((c) => (
-             <button
-               key={c}
-               type="button"
-               onClick={() => setSelectedColor(c)}
-               className={`w-6 h-6 rounded-full flex-shrink-0 transition-transform ${
-                 selectedColor === c ? 'scale-125 ring-2 ring-offset-2 ring-gray-200' : ''
-               }`}
-               style={{ backgroundColor: c }}
-             />
-           ))}
-         </div>
-        )}
-       
         {/* AI Suggestions Area */}
-        {parentNode && (
+        {(parentNode || isEditing) && (
           <div className="mb-3">
              {suggestions.length > 0 ? (
                <div className="flex flex-col gap-2">
@@ -118,12 +109,11 @@ export const NodeInput: React.FC<NodeInputProps> = ({
             className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Check size={16} />
-            放置
+            {isEditing ? '更新' : '放置'}
           </button>
         </div>
       </form>
       
-      {/* Little arrow pointing to dot */}
       <div className="absolute w-3 h-3 bg-white border-l border-b border-gray-100 transform -rotate-45 -bottom-1.5 left-1/2 -translate-x-1/2"></div>
     </div>
   );
